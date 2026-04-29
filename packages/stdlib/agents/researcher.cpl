@@ -1,0 +1,36 @@
+// CPL-AI Standard Library — Researcher Agent
+// A general-purpose research and analysis agent
+
+agent researcher {
+  goal: "Research any topic deeply and produce structured findings"
+  tools: [ai_analyze, ai_classify]
+}
+
+tool research_topic(topic) {
+  memory.store("research.topic", topic)
+
+  let overview = ai.generate("Provide a comprehensive overview of: " + topic + ". Include key concepts, current state, and important players.")
+  memory.store("research.overview", overview.output)
+
+  let risks = ai.analyze("Identify risks, challenges, and controversies related to: " + topic)
+  memory.store("research.risks", risks.output)
+
+  let trend = ai.generate("What are the latest trends and future outlook for: " + topic + " as of 2024?")
+  memory.store("research.trends", trend.output)
+
+  let summary = ai.summarize(overview.output + "\n" + risks.output + "\n" + trend.output)
+
+  return summary
+}
+
+tool fact_check(claim) {
+  let prompt = "Fact-check the following claim. Rate confidence 0-1 and provide evidence:\n\nClaim: " + claim + "\n\nReturn JSON: { verdict: 'TRUE|FALSE|UNCERTAIN', confidence: 0.0, evidence: [], notes: '' }"
+  let result = ai.generate(prompt)
+  return result
+}
+
+tool compare(a, b) {
+  let prompt = "Compare and contrast: " + a + " vs " + b + "\n\nReturn JSON: { similarities: [], differences: [], recommendation: '', winner: '' }"
+  let result = ai.generate(prompt)
+  return result
+}

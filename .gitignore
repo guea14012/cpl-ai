@@ -1,0 +1,8 @@
+node_modules/
+dist/
+release/
+*.log
+.env
+cpl-audit.log
+cpl-memory.json
+cpl_modules/

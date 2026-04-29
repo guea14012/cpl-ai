@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>⚡ CPL-AI Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',system-ui,sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0}
+.logo{font-size:18px;font-weight:700;color:#58a6ff}
+.tagline{font-size:11px;color:#8b949e;margin-left:10px}
+.header-right{display:flex;align-items:center;gap:8px}
+.api-input{background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:4px 10px;color:#e6edf3;font-size:12px;width:240px}
+.api-input:focus{outline:none;border-color:#58a6ff}
+.btn-ghost{background:transparent;border:1px solid #30363d;border-radius:6px;color:#8b949e;padding:4px 10px;cursor:pointer;font-size:12px;transition:all .2s}
+.btn-ghost:hover{border-color:#58a6ff;color:#58a6ff}
+.badge-status{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600}
+.badge-ok{background:#1a3a2a;color:#3fb950}
+.badge-err{background:#3d1a1a;color:#f85149}
+
+/* Toolbar */
+.toolbar{display:flex;justify-content:space-between;align-items:center;padding:6px 16px;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0;gap:8px}
+.toolbar-left{display:flex;gap:8px;align-items:center}
+.toolbar-right{display:flex;gap:8px;align-items:center}
+select{background:#0d1117;border:1px solid #30363d;border-radius:6px;color:#e6edf3;padding:4px 10px;font-size:12px;cursor:pointer}
+.btn-run{background:#238636;border:none;border-radius:6px;color:#fff;padding:6px 18px;cursor:pointer;font-weight:700;font-size:13px;transition:background .2s;display:flex;align-items:center;gap:6px}
+.btn-run:hover{background:#2ea043}
+.btn-run:disabled{background:#21262d;color:#484f58;cursor:not-allowed}
+.saved-msg{font-size:11px;color:#3fb950;animation:fadeIn .3s}
+
+/* Main layout */
+.main{display:flex;flex:1;overflow:hidden}
+.editor-pane{flex:1;display:flex;flex-direction:column;border-right:1px solid #30363d;min-width:0}
+.editor-label{padding:4px 12px;background:#161b22;font-size:11px;color:#8b949e;border-bottom:1px solid #30363d}
+#editor-container{flex:1;overflow:hidden}
+.output-pane{width:460px;display:flex;flex-direction:column;min-width:0}
+
+/* Tabs */
+.tabs{display:flex;background:#161b22;border-bottom:1px solid #30363d;flex-shrink:0}
+.tab{flex:1;padding:8px;background:transparent;border:none;border-bottom:2px solid transparent;color:#8b949e;cursor:pointer;font-size:12px;transition:all .2s}
+.tab.active{color:#58a6ff;border-bottom-color:#58a6ff}
+.tab-content{flex:1;overflow-y:auto;padding:12px}
+
+/* Output */
+.output-area{font-family:'Consolas','JetBrains Mono',monospace;font-size:12px;line-height:1.7}
+.log-line{padding:1px 4px;border-radius:2px;white-space:pre-wrap;word-break:break-all}
+.line-log{color:#3fb950}
+.line-alert{color:#d29922}
+.line-agent{color:#58a6ff}
+.line-run{color:#a371f7}
+.line-err{color:#f85149}
+.line-sep{color:#30363d}
+.line-default{color:#e6edf3}
+
+.status-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:6px;font-size:12px;margin-bottom:8px;flex-shrink:0}
+.status-ok{background:#1a3a2a}
+.status-err{background:#3d1a1a}
+.error-box{background:#3d1a1a;border:1px solid #f85149;border-radius:6px;padding:8px 10px;font-size:12px;color:#f85149;white-space:pre-wrap;word-break:break-word;margin-bottom:8px}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;opacity:.4;gap:8px;font-size:13px;color:#8b949e}
+.empty-state .icon{font-size:36px}
+
+/* Spinner */
+.spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px}
+.dots span{display:inline-block;margin:0 3px;color:#58a6ff;font-size:20px;animation:pulse 1s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* Token tab */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;text-align:center}
+.stat-num{font-size:22px;font-weight:700}
+.stat-label{font-size:10px;color:#8b949e;margin-top:2px}
+.big-token{text-align:center;padding:16px 0}
+.big-token .num{font-size:48px;font-weight:700;color:#58a6ff;display:block}
+.big-token .lbl{font-size:12px;color:#8b949e;margin-top:4px;display:block}
+
+/* Agent tab */
+.agent-card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;margin-bottom:10px}
+.agent-header{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.iter-badge{font-size:11px;font-weight:700;color:#8b949e}
+.action-badge{font-size:11px;font-weight:700;padding:2px 10px;border-radius:12px}
+.conf{font-size:11px;color:#484f58;margin-left:auto}
+.agent-section{background:#0d1117;border-radius:6px;padding:8px;margin-top:6px}
+.section-label{font-size:10px;font-weight:700;color:#8b949e;text-transform:uppercase;display:block;margin-bottom:4px}
+.section-text{font-size:12px;color:#e6edf3;line-height:1.5}
+.finding-list{padding-left:16px;margin:0}
+.finding-item{font-size:12px;color:#e6edf3;line-height:1.7}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:#0d1117}
+::-webkit-scrollbar-thumb{background:#30363d;border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#484f58}
+</style>
+</head>
+<body>
+
+<!-- Monaco loader -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+<!-- Header -->
+<header>
+  <div style="display:flex;align-items:center">
+    <span class="logo">⚡ CPL-AI</span>
+    <span class="tagline">Cyber Programming Language · AI Native</span>
+  </div>
+  <div class="header-right">
+    <input type="password" id="apiKey" class="api-input" placeholder="Anthropic API Key (optional)"/>
+    <button class="btn-ghost" onclick="saveKey()">💾 Save Key</button>
+    <span id="savedMsg" class="saved-msg" style="display:none"></span>
+  </div>
+</header>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="toolbar-left">
+    <select id="examples" onchange="loadExample()">
+      <option value="" disabled selected>Load example…</option>
+    </select>
+    <button class="btn-ghost" onclick="saveSnippet()">📋 Save</button>
+    <button class="btn-ghost" id="shareBtn" style="display:none" onclick="copyUrl()">🔗 Share</button>
+  </div>
+  <div class="toolbar-right">
+    <span id="backendStatus" class="badge-status badge-err">● Offline</span>
+    <button class="btn-run" id="runBtn" onclick="runCode()">
+      <i class="fa fa-play"></i> Run &nbsp;<kbd style="font-size:10px;opacity:.7">Ctrl+Enter</kbd>
+    </button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <!-- Editor -->
+  <div class="editor-pane">
+    <div class="editor-label">main.cpl — CPL-AI</div>
+    <div id="editor-container"></div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-pane">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('output',this)">📄 Output</button>
+      <button class="tab" onclick="switchTab('agent',this)">🤖 Agent</button>
+      <button class="tab" onclick="switchTab('tokens',this)">📊 Tokens</button>
+    </div>
+
+    <div id="tab-output" class="tab-content">
+      <div class="empty-state">
+        <span class="icon">▶</span>
+        Press Run or Ctrl+Enter to execute
+      </div>
+    </div>
+
+    <div id="tab-agent" class="tab-content" style="display:none">
+      <div class="empty-state">
+        <span class="icon">🤖</span>
+        Agent steps appear when an agent runs
+      </div>
+    </div>
+
+    <div id="tab-tokens" class="tab-content" style="display:none">
+      <div class="empty-state">
+        <span class="icon">📊</span>
+        Token usage appears after running
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:3001/api';
+let editor, shareUrl = '', lastResult = null;
+
+const DEFAULT_CODE = `// CPL-AI Playground — write AI-native code here
+
+agent analyst {
+  goal: "Analyze security threats intelligently"
+  tools: [scanner, analyzer]
+}
+
+let prompt = "Summarize the top 3 web application security threats in 2024"
+let result = ai.generate(prompt)
+
+if result.confidence > 0.8 {
+  log(result.output)
+  memory.store("last_analysis", result.output)
+}
+
+alert("Analysis complete — tokens used: " + result.tokens_used)
+`;
+
+// ── Monaco init ─────────────────────────────────────────────────────────────
+require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+require(['vs/editor/editor.main'], function () {
+  // CPL-AI language
+  monaco.languages.register({ id: 'cpl-ai', extensions: ['.cpl'] });
+  monaco.languages.setMonarchTokensProvider('cpl-ai', {
+    keywords: ['let','const','agent','tool','on','run','import','from','if','else','for','in','while','return','async','await','log','alert','goal','tools','true','false','null'],
+    tokenizer: {
+      root: [
+        [/\/\/.*$/, 'comment'],
+        [/"([^"\\]|\\.)*"/, 'string'],
+        [/'([^'\\]|\\.)*'/, 'string'],
+        [/\b\d+(\.\d+)?\b/, 'number'],
+        [/\b(ai|memory)\b/, 'keyword.builtin'],
+        [/\b(agent|tool|goal|tools|run|on)\b/, 'keyword.agent'],
+        [/\b(let|const|if|else|for|in|while|return|async|await|import|from)\b/, 'keyword'],
+        [/\b(log|alert)\b/, 'keyword.output'],
+        [/\b(true|false|null)\b/, 'constant'],
+        [/[a-zA-Z_]\w*/, 'identifier'],
+        [/[=><!+\-*\/&|]+/, 'operator'],
+        [/[{}[\]()]/, 'delimiter'],
+        [/[.,:;]/, 'punctuation'],
+      ],
+    }
+  });
+  monaco.editor.defineTheme('cpl-dark', {
+    base: 'vs-dark', inherit: true,
+    rules: [
+      { token: 'keyword',         foreground: 'ff79c6', fontStyle: 'bold' },
+      { token: 'keyword.agent',   foreground: 'bd93f9', fontStyle: 'bold' },
+      { token: 'keyword.output',  foreground: 'ffb86c', fontStyle: 'bold' },
+      { token: 'keyword.builtin', foreground: '50fa7b', fontStyle: 'bold' },
+      { token: 'string',          foreground: 'f1fa8c' },
+      { token: 'number',          foreground: 'bd93f9' },
+      { token: 'constant',        foreground: 'ff79c6' },
+      { token: 'comment',         foreground: '6272a4', fontStyle: 'italic' },
+      { token: 'operator',        foreground: 'ff79c6' },
+    ],
+    colors: {
+      'editor.background': '#0d1117',
+      'editor.foreground': '#e6edf3',
+      'editorLineNumber.foreground': '#484f58',
+      'editor.lineHighlightBackground': '#161b22',
+      'editorCursor.foreground': '#58a6ff',
+    }
+  });
+
+  // Autocomplete
+  monaco.languages.registerCompletionItemProvider('cpl-ai', {
+    triggerCharacters: ['.'],
+    provideCompletionItems(model, pos) {
+      const line = model.getLineContent(pos.lineNumber).slice(0, pos.column - 1);
+      const word = model.getWordUntilPosition(pos);
+      const range = { startLineNumber: pos.lineNumber, endLineNumber: pos.lineNumber, startColumn: word.startColumn, endColumn: word.endColumn };
+      const suggestions = [];
+      if (/\bai\.$/.test(line)) {
+        ['generate','analyze','classify','chat','summarize'].forEach(m => {
+          suggestions.push({ label: m, kind: monaco.languages.CompletionItemKind.Method, insertText: `${m}($1)`, insertTextRules: 4, documentation: `ai.${m}() → AIResult`, range });
+        });
+      } else if (/\bmemory\.$/.test(line)) {
+        ['store','get','delete','search','list','context'].forEach(m => {
+          suggestions.push({ label: m, kind: monaco.languages.CompletionItemKind.Method, insertText: `${m}($1)`, insertTextRules: 4, documentation: `memory.${m}()`, range });
+        });
+      }
+      return { suggestions };
+    }
+  });
+
+  editor = monaco.editor.create(document.getElementById('editor-container'), {
+    value: DEFAULT_CODE, language: 'cpl-ai', theme: 'cpl-dark',
+    fontSize: 14, fontFamily: "'JetBrains Mono','Consolas',monospace",
+    minimap: { enabled: false }, wordWrap: 'on', lineNumbers: 'on',
+    scrollBeyondLastLine: false, automaticLayout: true,
+    padding: { top: 12 }, bracketPairColorization: { enabled: true },
+    tabSize: 2, smoothScrolling: true,
+  });
+
+  // Ctrl+Enter to run
+  editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, runCode);
+
+  init();
+});
+
+// ── Init ────────────────────────────────────────────────────────────────────
+async function init() {
+  // Restore API key
+  const saved = localStorage.getItem('cpl_api_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+
+  // Check snippet in URL
+  const params = new URLSearchParams(location.search);
+  const snipId = params.get('snippet');
+  if (snipId) {
+    try {
+      const r = await fetch(`${API}/snippets/${snipId}`);
+      const s = await r.json();
+      if (s.code && editor) editor.setValue(s.code);
+    } catch {}
+  }
+
+  checkBackend();
+  setInterval(checkBackend, 10000);
+  loadExamples();
+}
+
+async function checkBackend() {
+  try {
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(3000) });
+    const d = await r.json();
+    const el = document.getElementById('backendStatus');
+    el.textContent = `● Online · ${d.provider}`;
+    el.className = 'badge-status badge-ok';
+  } catch {
+    document.getElementById('backendStatus').textContent = '● Offline';
+    document.getElementById('backendStatus').className = 'badge-status badge-err';
+  }
+}
+
+async function loadExamples() {
+  try {
+    const r = await fetch(`${API}/examples`);
+    const examples = await r.json();
+    const sel = document.getElementById('examples');
+    examples.forEach(ex => {
+      const opt = document.createElement('option');
+      opt.value = ex.id; opt.textContent = ex.title;
+      opt.dataset.code = ex.code;
+      sel.appendChild(opt);
+    });
+  } catch {}
+}
+
+function loadExample() {
+  const sel = document.getElementById('examples');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.code && editor) editor.setValue(opt.dataset.code);
+}
+
+// ── Run ─────────────────────────────────────────────────────────────────────
+async function runCode() {
+  const code = editor ? editor.getValue() : '';
+  if (!code.trim()) return;
+
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Running…';
+
+  showSpinner();
+
+  try {
+    const res = await fetch(`${API}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, apiKey: document.getElementById('apiKey').value || undefined }),
+    });
+    lastResult = await res.json();
+    renderOutput(lastResult);
+    renderTokens(lastResult);
+  } catch (err) {
+    lastResult = { success: false, error: String(err), logs: [], tokensUsed: 0, duration: 0 };
+    renderOutput(lastResult);
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa fa-play"></i> Run &nbsp;<kbd style="font-size:10px;opacity:.7">Ctrl+Enter</kbd>';
+}
+
+function showSpinner() {
+  document.getElementById('tab-output').innerHTML = `
+    <div class="spinner">
+      <div class="dots"><span>●</span><span>●</span><span>●</span></div>
+      <div style="color:#8b949e;font-size:13px">Executing CPL-AI program…</div>
+    </div>`;
+}
+
+function colorClass(line) {
+  if (/^\[LOG\]/.test(line))   return 'line-log';
+  if (/⚠|ALERT/.test(line))   return 'line-alert';
+  if (/\[AGENT:/.test(line))   return 'line-agent';
+  if (/\[RUN\]/.test(line))    return 'line-run';
+  if (/Error|error/.test(line))return 'line-err';
+  if (/^━/.test(line))         return 'line-sep';
+  return 'line-default';
+}
+
+function renderOutput(result) {
+  const ok   = result.success;
+  const pane = document.getElementById('tab-output');
+  let html   = `<div class="status-bar ${ok?'status-ok':'status-err'}">
+    <span style="font-weight:700;color:${ok?'#3fb950':'#f85149'}">${ok?'✓ SUCCESS':'✗ FAILED'}</span>
+    <span style="color:#8b949e">${result.duration}ms · ${result.tokensUsed} tokens</span>
+  </div>`;
+  if (result.error) html += `<div class="error-box"><strong>Error:</strong> ${escHtml(result.error)}</div>`;
+  html += '<div class="output-area">';
+  if (!result.logs || result.logs.length === 0) {
+    html += '<span style="color:#484f58;font-style:italic">No output</span>';
+  } else {
+    result.logs.forEach(line => {
+      html += `<div class="log-line ${colorClass(line)}">${escHtml(line)}</div>`;
+    });
+  }
+  html += '</div>';
+  pane.innerHTML = html;
+}
+
+function renderTokens(result) {
+  if (!result) return;
+  const pane = document.getElementById('tab-tokens');
+  const cost = result.tokensUsed > 0 ? ((result.tokensUsed / 2 * 3 + result.tokensUsed / 2 * 15) / 1_000_000).toFixed(6) : '0.000000';
+  pane.innerHTML = `
+    <div class="big-token">
+      <span class="num">${result.tokensUsed.toLocaleString()}</span>
+      <span class="lbl">tokens used this run</span>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-num" style="color:#58a6ff">${result.duration}ms</div><div class="stat-label">Duration</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#3fb950">$${cost}</div><div class="stat-label">Est. Cost</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:#a371f7">${result.logs?.length??0}</div><div class="stat-label">Log Lines</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:${result.success?'#3fb950':'#f85149'}">${result.success?'OK':'ERR'}</div><div class="stat-label">Status</div></div>
+    </div>
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px">
+      <div style="font-size:11px;font-weight:700;color:#8b949e;text-transform:uppercase;margin-bottom:8px">Model Pricing Reference</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <tr style="color:#8b949e;border-bottom:1px solid #30363d"><td style="padding:3px 6px">Model</td><td>Input/1M</td><td>Output/1M</td></tr>
+        <tr style="background:#1a2a3a"><td style="padding:3px 6px;font-family:monospace">claude-sonnet-4-6</td><td>$3.00</td><td>$15.00</td></tr>
+        <tr><td style="padding:3px 6px;font-family:monospace">claude-opus-4-7</td><td>$15.00</td><td>$75.00</td></tr>
+        <tr><td style="padding:3px 6px;font-family:monospace">claude-haiku-4-5</td><td>$0.25</td><td>$1.25</td></tr>
+      </table>
+    </div>`;
+}
+
+// ── Save / Share ─────────────────────────────────────────────────────────────
+async function saveSnippet() {
+  const code = editor ? editor.getValue() : '';
+  try {
+    const r = await fetch(`${API}/snippets`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, title: 'CPL-AI Snippet' }),
+    });
+    const d = await r.json();
+    shareUrl = `${location.origin}${location.pathname}?snippet=${d.id}`;
+    document.getElementById('shareBtn').style.display = '';
+    showSaved('Saved!');
+  } catch { showSaved('Save failed'); }
+}
+
+function copyUrl() {
+  navigator.clipboard.writeText(shareUrl).then(() => showSaved('URL copied!'));
+}
+
+function saveKey() {
+  localStorage.setItem('cpl_api_key', document.getElementById('apiKey').value);
+  showSaved('Key saved');
+}
+
+function showSaved(msg) {
+  const el = document.getElementById('savedMsg');
+  el.textContent = msg; el.style.display = '';
+  setTimeout(() => el.style.display = 'none', 2500);
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  ['output','agent','tokens'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

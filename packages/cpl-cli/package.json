@@ -1,0 +1,22 @@
+{
+  "name": "@cpl-ai/cli",
+  "version": "1.0.0",
+  "description": "CPL-AI package manager CLI",
+  "bin": { "cpl-pkg": "./dist/index.js" },
+  "scripts": {
+    "dev":   "ts-node src/index.ts",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "commander": "^11.0.0",
+    "chalk":     "^4.1.2",
+    "node-fetch":"^3.3.0",
+    "tar":       "^6.2.0"
+  },
+  "devDependencies": {
+    "@types/node":    "^20.0.0",
+    "@types/tar":     "^6.1.12",
+    "ts-node":        "^10.9.0",
+    "typescript":     "^5.0.0"
+  }
+}

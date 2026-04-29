@@ -1,0 +1,105 @@
+// ════════════════════════════════════════════════════════════════
+//  CPL-AI Example 2: AI Log Analyzer
+//  Analyzes server/application logs with AI to detect anomalies
+//  Usage: cpl run examples/log_analyzer.cpl
+// ════════════════════════════════════════════════════════════════
+
+// ── Tools ────────────────────────────────────────────────────────
+
+tool parse_log_batch(logs) {
+  let prompt = "Parse these server logs and extract: timestamp, severity, source_ip, event_type, message.\nLogs:\n" + logs + "\nReturn JSON array of parsed entries."
+  let result = ai.analyze(logs)
+  return result.output
+}
+
+tool detect_anomalies(parsed_logs) {
+  let prompt = "Analyze these parsed log entries for security anomalies:\n" + parsed_logs + "\n\nLook for: brute force attacks, SQL injection, XSS, privilege escalation, data exfiltration, unusual access patterns.\nReturn JSON: { anomalies: [{ type, severity, source_ip, timestamp, description, confidence }], total_risk: 'LOW|MEDIUM|HIGH|CRITICAL' }"
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+tool correlate_events(anomalies) {
+  let prompt = "Correlate these security events to identify attack campaigns or patterns:\n" + anomalies + "\n\nGroup related events, identify potential attack chains, and suggest MITRE ATT&CK techniques. Return JSON."
+  let result = ai.analyze(anomalies)
+  return result.output
+}
+
+tool generate_alert(event) {
+  let prompt = "Generate a security alert for this event:\n" + event + "\n\nInclude: Alert ID, Severity, Summary, Affected Assets, Recommended Actions, Priority."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+// ── Log Analyzer Agent ────────────────────────────────────────────
+
+agent log_analyzer {
+  goal: "Detect security threats and anomalies in application and server logs"
+  tools: [parse_log_batch, detect_anomalies, correlate_events, generate_alert]
+}
+
+// ── Sample log data ───────────────────────────────────────────────
+
+let sample_logs = "2024-01-15 03:22:11 ERROR 192.168.1.50 Failed login attempt: admin
+2024-01-15 03:22:14 ERROR 192.168.1.50 Failed login attempt: admin
+2024-01-15 03:22:18 ERROR 192.168.1.50 Failed login attempt: root
+2024-01-15 03:22:20 ERROR 192.168.1.50 Failed login attempt: admin
+2024-01-15 03:22:22 ERROR 192.168.1.50 Failed login attempt: admin
+2024-01-15 03:23:01 WARN  10.0.0.5     SQL query: SELECT * FROM users WHERE id=1 OR 1=1
+2024-01-15 03:25:44 INFO  172.16.0.1   File accessed: /etc/passwd
+2024-01-15 03:27:12 ERROR 203.0.113.5  XSS attempt: <script>document.cookie</script>
+2024-01-15 04:01:00 INFO  192.168.1.10 User 'svcacct' elevated to admin
+2024-01-15 04:15:30 WARN  192.168.1.10 Large data transfer: 2.3GB to external IP 198.51.100.42"
+
+// ── Main program ──────────────────────────────────────────────────
+
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("  CPL-AI Log Analyzer")
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+memory.store("logs.raw",   sample_logs)
+memory.store("logs.count", 10)
+
+// Parse logs
+log("\n[Phase 1] Parsing log entries...")
+let parsed = parse_log_batch(sample_logs)
+log("Parsed entries: " + parsed)
+memory.store("logs.parsed", parsed)
+
+// Detect anomalies
+log("\n[Phase 2] Detecting anomalies...")
+let anomalies = detect_anomalies(parsed)
+log("Anomalies detected:")
+log(anomalies)
+memory.store("logs.anomalies", anomalies)
+
+// Correlate events
+log("\n[Phase 3] Correlating events...")
+let correlation = correlate_events(anomalies)
+log("Correlation analysis:")
+log(correlation)
+memory.store("logs.correlation", correlation)
+
+// AI Summary
+log("\n[Phase 4] Generating security summary...")
+let summary = ai.summarize("Security log analysis findings:\n" + anomalies + "\n\nCorrelation:\n" + correlation)
+log("\nExecutive Summary:")
+log(summary.output)
+
+// Risk assessment
+let risk_check = ai.classify("Based on the following security events, what is the overall threat level?\n" + anomalies)
+
+if risk_check.confidence > 0.6 {
+  alert("SECURITY ALERT — " + risk_check.output)
+}
+
+// Event-driven monitoring mode
+on new_log_entry {
+  let analysis = ai.analyze(data)
+  if analysis.confidence > 0.8 {
+    alert("New threat detected: " + analysis.output)
+    memory.store("alert." + data, analysis.output)
+  }
+}
+
+log("\n✓ Log analysis complete")
+log("Total findings stored in memory: " + JSON.stringify(memory.list()))

@@ -1,0 +1,153 @@
+// ════════════════════════════════════════════════════════════════
+//  CPL-AI Example 3: Auto Bug Finder
+//  Static analysis + AI-powered code vulnerability scanner
+//  Usage: cpl run examples/bug_finder.cpl
+// ════════════════════════════════════════════════════════════════
+
+// ── Tools ────────────────────────────────────────────────────────
+
+tool scan_code(code) {
+  let prompt = "Perform a comprehensive static security analysis of this code:\n\n```\n" + code + "\n```\n\nCheck for: SQL injection, XSS, command injection, path traversal, insecure deserialization, hardcoded secrets, missing input validation, CSRF vulnerabilities, insecure direct object references.\n\nReturn JSON: { vulnerabilities: [{ id, type, severity, line, description, cwe, cvss_score, fix }], overall_risk: '', secure_score: 0-100 }"
+  let result = ai.analyze(code)
+  memory.store("scan.last", result.output)
+  return result.output
+}
+
+tool suggest_fix(vulnerability) {
+  let prompt = "Provide a detailed, secure code fix for this vulnerability:\n" + vulnerability + "\n\nInclude: corrected code snippet, explanation, security principle applied, testing approach."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+tool check_dependencies(deps) {
+  let prompt = "Analyze these project dependencies for known vulnerabilities:\n" + deps + "\n\nReturn JSON: { vulnerable: [{ package, version, cve, severity, fix_version }], safe: [], risk_summary: '' }"
+  let result = ai.analyze(deps)
+  return result.output
+}
+
+tool generate_security_report(findings) {
+  let prompt = "Generate a developer-focused security report from these findings:\n" + findings + "\n\nInclude: Vulnerability Summary Table, Priority Order, Code Examples (secure vs insecure), Testing Checklist, OWASP Top 10 mapping."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+tool explain_vuln(cwe_id) {
+  let prompt = "Explain CWE-" + cwe_id + " in detail: what it is, how it works, real-world examples, and how to prevent it. Use clear developer-friendly language."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+// ── Bug Finder Agent ─────────────────────────────────────────────
+
+agent bug_finder {
+  goal: "Find, classify, and explain security bugs in source code with actionable fixes"
+  tools: [scan_code, suggest_fix, check_dependencies, generate_security_report, explain_vuln]
+}
+
+// ── Sample vulnerable code snippets ──────────────────────────────
+
+let vuln_python = "import sqlite3
+import subprocess
+import os
+
+def get_user(user_id):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    query = 'SELECT * FROM users WHERE id = ' + user_id
+    cursor.execute(query)
+    return cursor.fetchall()
+
+def run_command(cmd):
+    result = subprocess.run(cmd, shell=True, capture_output=True)
+    return result.stdout
+
+password = 'super_secret_123'
+api_key = 'sk-abc123def456ghi789'
+
+def render_page(user_input):
+    return '<html><body>' + user_input + '</body></html>'"
+
+let vuln_js = "const express = require('express')
+const app = express()
+
+app.get('/search', (req, res) => {
+  const query = req.query.q
+  const html = '<h1>Results for: ' + query + '</h1>'
+  res.send(html)
+})
+
+app.post('/login', (req, res) => {
+  const { user, pass } = req.body
+  const sql = 'SELECT * FROM users WHERE username=\"' + user + '\" AND password=\"' + pass + '\"'
+  db.query(sql, (err, rows) => {
+    if (rows.length > 0) res.json({ token: 'hardcoded-jwt-secret' })
+  })
+})"
+
+let dependencies = "flask==1.0.0
+Pillow==9.0.0
+requests==2.18.0
+PyYAML==5.1
+urllib3==1.24.0
+cryptography==2.6"
+
+// ── Main program ──────────────────────────────────────────────────
+
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("  CPL-AI Auto Bug Finder")
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+// Scan Python code
+log("\n[Scan 1] Python code analysis...")
+let python_result = scan_code(vuln_python)
+log("Python findings:")
+log(python_result)
+memory.store("findings.python", python_result)
+
+// Scan JavaScript code
+log("\n[Scan 2] JavaScript code analysis...")
+let js_result = scan_code(vuln_js)
+log("JavaScript findings:")
+log(js_result)
+memory.store("findings.js", js_result)
+
+// Check dependencies
+log("\n[Scan 3] Dependency vulnerability check...")
+let dep_result = check_dependencies(dependencies)
+log("Dependency findings:")
+log(dep_result)
+memory.store("findings.deps", dep_result)
+
+// Get fix for SQL injection (most critical)
+log("\n[Fix] Generating fix for SQL injection...")
+let fix = suggest_fix("SQL injection via string concatenation in database queries — user input directly concatenated into SQL query string")
+log("Recommended fix:")
+log(fix)
+
+// Learn about XSS
+log("\n[Education] XSS vulnerability explanation...")
+let xss_info = explain_vuln("79")
+log(xss_info)
+
+// Combine all findings
+let all_findings = "Python:\n" + python_result + "\n\nJavaScript:\n" + js_result + "\n\nDependencies:\n" + dep_result
+
+// Generate final report
+log("\n[Report] Generating security report...")
+let report = generate_security_report(all_findings)
+log(report)
+memory.store("report.security", report)
+
+// Overall risk classification
+let overall = ai.classify("Rate the overall security posture based on these findings:\n" + all_findings)
+log("\nOverall risk rating: " + overall.output)
+
+if overall.confidence > 0.7 {
+  alert("Security scan complete — action required")
+}
+
+// Run the agent for deep analysis
+log("\n[Agent] Running Bug Finder agent for deep analysis...")
+run bug_finder on vuln_python
+
+log("\n✓ Bug finding complete — " + memory.list().length + " findings stored")

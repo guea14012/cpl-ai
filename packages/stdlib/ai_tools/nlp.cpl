@@ -1,0 +1,36 @@
+// CPL-AI Standard Library — NLP Tools
+// import ai_tools.nlp
+
+tool nlp_sentiment(text) {
+  let result = ai.classify(text)
+  return result
+}
+
+tool nlp_summarize(text) {
+  let result = ai.summarize(text)
+  return result
+}
+
+tool nlp_extract_entities(text) {
+  let prompt = "Extract named entities (people, organizations, locations, dates) from:\n" + text + "\nReturn JSON: { entities: [...] }"
+  let result = ai.generate(prompt)
+  return result
+}
+
+tool nlp_translate(text, target_lang) {
+  let prompt = "Translate the following to " + target_lang + ":\n" + text
+  let result = ai.generate(prompt)
+  return result
+}
+
+tool nlp_intent(text) {
+  let prompt = "Detect the user intent in the following message. Return JSON: { intent: '...', confidence: 0.0-1.0 }\n\n" + text
+  let result = ai.generate(prompt)
+  return result
+}
+
+tool nlp_keywords(text) {
+  let prompt = "Extract the top 5 keywords from the following text. Return a JSON array:\n" + text
+  let result = ai.generate(prompt)
+  return result
+}

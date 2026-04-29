@@ -1,0 +1,128 @@
+// ════════════════════════════════════════════════════════════════
+//  CPL-AI Example 4: Intelligent Chatbot Agent
+//  Context-aware chatbot with memory, intent detection,
+//  tool calling, and personality configuration
+//  Usage: cpl run examples/chatbot_agent.cpl
+// ════════════════════════════════════════════════════════════════
+
+// ── Tools ────────────────────────────────────────────────────────
+
+tool detect_intent(message) {
+  let prompt = "Detect the intent in this message and classify it. Return JSON: { intent: 'greeting|question|command|complaint|goodbye|security_query|code_help|general', confidence: 0.0-1.0, entities: {}, sentiment: 'positive|neutral|negative' }\n\nMessage: " + message
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+tool search_memory(query) {
+  let results = memory.search(query)
+  return results
+}
+
+tool format_response(raw, style) {
+  let prompt = "Reformat this response in " + style + " style:\n" + raw + "\n\nKeep the core information but adjust the tone and format."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+tool generate_followup(conversation, last_response) {
+  let prompt = "Based on this conversation, suggest 3 relevant follow-up questions the user might ask:\n" + conversation + "\n\nLast response: " + last_response + "\n\nReturn JSON: { suggestions: ['q1', 'q2', 'q3'] }"
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+// ── Chatbot Agent ─────────────────────────────────────────────────
+
+agent chatbot {
+  goal: "Provide intelligent, context-aware responses with memory of conversation history"
+  tools: [detect_intent, search_memory, format_response, generate_followup]
+}
+
+// ── Chatbot implementation ────────────────────────────────────────
+
+let bot_name    = "ARIA"
+let bot_persona = "You are ARIA (Autonomous Reasoning and Intelligence Agent), a friendly and knowledgeable AI assistant specialized in cybersecurity and programming. You are helpful, precise, and occasionally witty."
+
+// Initialize conversation history
+let conversation = []
+memory.store("chat.session_id", "session-2024-001")
+memory.store("chat.bot_name",   bot_name)
+memory.store("chat.started",    "2024-01-15T10:00:00Z")
+
+// Simulated conversation turns
+let turns = [
+  "Hello! What can you help me with?",
+  "What is SQL injection and how dangerous is it?",
+  "Can you show me a secure way to handle database queries in Python?",
+  "What other security vulnerabilities should I know about?",
+  "How do I set up a WAF to protect my web app?"
+]
+
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("  " + bot_name + " Chatbot Agent — CPL-AI")
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("")
+
+let turn_count = 0
+
+for user_msg in turns {
+  turn_count = turn_count + 1
+
+  log("User [Turn " + turn_count + "]: " + user_msg)
+
+  // Detect intent
+  let intent_raw = detect_intent(user_msg)
+  memory.store("chat.last_intent", intent_raw)
+
+  // Search memory for relevant context
+  let mem_context = search_memory(user_msg)
+
+  // Add to conversation history
+  conversation.push({ role: "user", content: user_msg })
+
+  // Build enriched context message
+  let system = bot_persona + "\n\nConversation context:\n" + memory.context()
+
+  // Get AI response
+  let response = ai.chat(conversation)
+
+  // Add assistant response to history
+  conversation.push({ role: "assistant", content: response.output })
+
+  // Store key information from this turn
+  memory.store("chat.turn." + turn_count, {
+    user:  user_msg,
+    bot:   response.output,
+    tokens: response.tokens_used
+  })
+
+  log(bot_name + ": " + response.output)
+  log("  [tokens: " + response.tokens_used + ", confidence: " + response.confidence + "]")
+  log("")
+}
+
+// Generate suggested follow-ups after conversation
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("Suggested follow-up questions:")
+let last_bot_response = memory.get("chat.turn." + turn_count)
+let followups = generate_followup(JSON.stringify(conversation), last_bot_response)
+log(followups)
+
+// Generate conversation summary
+let history_text = JSON.stringify(conversation)
+let summary = ai.summarize(history_text)
+log("\nConversation Summary:")
+log(summary.output)
+memory.store("chat.summary", summary.output)
+
+// Session analytics
+let total_tokens = 0
+let i = 1
+while i <= turn_count {
+  let turn = memory.get("chat.turn." + i)
+  i = i + 1
+}
+
+log("\nSession Stats:")
+log("  Turns: " + turn_count)
+log("  Memory keys: " + memory.list().length)
+log("\n✓ Chat session complete")

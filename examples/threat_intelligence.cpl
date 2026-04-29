@@ -1,0 +1,170 @@
+// ════════════════════════════════════════════════════════════════
+//  CPL-AI Example 5: Threat Intelligence Analyzer
+//  CVE research, IoC analysis, threat actor profiling,
+//  and threat hunting with AI-native agents
+//  Usage: cpl run examples/threat_intelligence.cpl
+// ════════════════════════════════════════════════════════════════
+
+// ── Tools ────────────────────────────────────────────────────────
+
+tool lookup_cve(cve_id) {
+  let prompt = "Provide detailed threat intelligence for " + cve_id + ". Include: CVSS score, CVSS vector, vulnerability type, affected products/versions, exploitation status (in-the-wild), PoC availability, patch status, affected industries, MITRE ATT&CK techniques, recommended mitigations.\n\nReturn structured JSON."
+  let result = ai.generate(prompt)
+  memory.store("cve." + cve_id, result.output)
+  return result.output
+}
+
+tool analyze_ioc(ioc, ioc_type) {
+  let prompt = "Analyze this Indicator of Compromise as a threat intelligence analyst:\nType: " + ioc_type + "\nValue: " + ioc + "\n\nProvide: threat classification, associated malware/APT groups, confidence level, recommended action (block/monitor/investigate), related IoCs, TLP level.\n\nReturn JSON."
+  let result = ai.analyze(ioc)
+  return result.output
+}
+
+tool profile_threat_actor(actor_name) {
+  let prompt = "Create a comprehensive threat actor profile for: " + actor_name + "\n\nInclude: Origin/attribution, motivation (nation-state/criminal/hacktivist), TTPs (MITRE ATT&CK), target sectors, notable campaigns, malware arsenal, infrastructure patterns, C2 methods, recent activity.\n\nReturn detailed JSON profile."
+  let result = ai.generate(prompt)
+  memory.store("actor." + actor_name, result.output)
+  return result.output
+}
+
+tool hunt_threats(environment) {
+  let prompt = "Design threat hunting hypotheses and queries for this environment:\n" + environment + "\n\nProvide: Hunting hypotheses (5), SIEM queries (Splunk/ELK), behavioral indicators, data sources needed, priority order, expected false positive rate.\n\nReturn JSON."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+tool correlate_intelligence(iocs, cves, actors) {
+  let prompt = "Correlate this threat intelligence to identify campaign connections:\n\nIoCs:\n" + iocs + "\n\nCVEs:\n" + cves + "\n\nThreat Actors:\n" + actors + "\n\nIdentify: Shared infrastructure, overlapping TTPs, campaign attribution confidence, timeline, predicted next targets, recommended defensive priority.\n\nReturn JSON."
+  let result = ai.analyze(iocs + cves + actors)
+  return result.output
+}
+
+tool generate_threat_report(intel) {
+  let prompt = "Generate a formal Threat Intelligence Report:\n" + intel + "\n\nSections: Executive Summary, Threat Landscape Overview, Key Findings, Threat Actor Analysis, Campaign Analysis, Risk Assessment, Strategic Recommendations, Tactical Recommendations, Appendix (IoCs, STIX data).\n\nFormat as a professional TI report."
+  let result = ai.generate(prompt)
+  return result.output
+}
+
+// ── Threat Intelligence Agent ─────────────────────────────────────
+
+agent threat_intel_agent {
+  goal: "Gather, analyze, and correlate threat intelligence to protect the organization"
+  tools: [lookup_cve, analyze_ioc, profile_threat_actor, hunt_threats, correlate_intelligence, generate_threat_report]
+}
+
+// ── Main program ──────────────────────────────────────────────────
+
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("  CPL-AI Threat Intelligence Analyzer")
+log("  Powered by AI-Native Agents")
+log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+
+memory.store("ti.session",     "TI-2024-001")
+memory.store("ti.analyst",     "cpl-ai-system")
+memory.store("ti.tlp",         "AMBER")
+memory.store("ti.started",     "2024-01-15T00:00:00Z")
+
+// ── Step 1: CVE Intelligence ───────────────────────────────────────
+
+log("\n[1/5] CVE Intelligence Gathering...")
+
+let critical_cves = ["CVE-2024-3094", "CVE-2021-44228", "CVE-2023-34048"]
+
+for cve in critical_cves {
+  log("  Analyzing " + cve + "...")
+  let cve_intel = lookup_cve(cve)
+  log("  " + cve + ": " + cve_intel)
+}
+
+let cve_summary = ai.summarize(memory.context())
+log("\nCVE Summary:")
+log(cve_summary.output)
+
+// ── Step 2: IoC Analysis ─────────────────────────────────────────
+
+log("\n[2/5] Indicator of Compromise Analysis...")
+
+let iocs = [
+  { value: "198.51.100.42",                      type: "ip" },
+  { value: "evil-c2-domain.ru",                  type: "domain" },
+  { value: "4d1740485c3c3e3e7e8d6b4a5f6e7a8b",  type: "hash_md5" },
+  { value: "https://malware-site.onion/payload",  type: "url" }
+]
+
+let ioc_results = []
+for ioc in iocs {
+  let analysis = analyze_ioc(ioc.value, ioc.type)
+  log("  IoC [" + ioc.type + "]: " + ioc.value)
+  log("  Analysis: " + analysis)
+  ioc_results.push(analysis)
+  memory.store("ioc." + ioc.value, analysis)
+}
+
+// ── Step 3: Threat Actor Profiling ──────────────────────────────
+
+log("\n[3/5] Threat Actor Profiling...")
+
+let actors = ["APT29", "Lazarus Group"]
+
+for actor in actors {
+  log("  Profiling: " + actor)
+  let profile = profile_threat_actor(actor)
+  log(profile)
+}
+
+// ── Step 4: Threat Hunting ────────────────────────────────────────
+
+log("\n[4/5] Threat Hunting Hypothesis Generation...")
+
+let environment = "Enterprise Windows environment, 500 endpoints, Active Directory, Office 365, Splunk SIEM, Palo Alto firewall"
+let hunt_plan   = hunt_threats(environment)
+log("Threat Hunt Plan:")
+log(hunt_plan)
+memory.store("ti.hunt_plan", hunt_plan)
+
+// ── Step 5: Intelligence Correlation ─────────────────────────────
+
+log("\n[5/5] Correlating Intelligence...")
+
+let all_iocs  = JSON.stringify(ioc_results)
+let all_cves  = memory.context()
+let all_actors = memory.get("actor.APT29")
+
+let correlation = correlate_intelligence(all_iocs, all_cves, all_actors)
+log("Intelligence Correlation:")
+log(correlation)
+memory.store("ti.correlation", correlation)
+
+// ── Final Report ──────────────────────────────────────────────────
+
+log("\n[Report] Generating Threat Intelligence Report...")
+
+let full_intel = memory.context()
+let ti_report  = generate_threat_report(full_intel)
+log("\n" + ti_report)
+memory.store("ti.final_report", ti_report)
+
+// Risk alert
+let risk = ai.classify("Based on this threat intelligence, what is the immediate risk level to the organization?\n" + correlation)
+
+if risk.confidence > 0.6 {
+  alert("THREAT INTELLIGENCE ALERT — " + risk.output)
+  alert("Confidence: " + risk.confidence)
+}
+
+// Event-driven: trigger on new threat
+on new_threat_feed {
+  log("New threat intelligence received")
+  let analysis = ai.analyze(data)
+  memory.store("ti.feed." + data, analysis.output)
+  if analysis.confidence > 0.8 {
+    alert("High-confidence threat detected: " + analysis.output)
+  }
+}
+
+log("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+log("✓ Threat Intelligence analysis complete")
+log("  Session: " + memory.get("ti.session"))
+log("  Intelligence items stored: " + memory.list().length)
+log("  Run agent for deep autonomous analysis:")
+log("  → run threat_intel_agent on <target>")

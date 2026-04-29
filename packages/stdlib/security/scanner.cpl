@@ -1,0 +1,43 @@
+// CPL-AI Standard Library — Security Scanner Tools
+// import security.scanner
+
+tool scan_ports(target) {
+  memory.store("scan.target", target)
+  memory.store("scan.started", "now")
+  let prompt = "Simulate a port scan on " + target + ". Return JSON: { open_ports: [], services: {}, os_hint: '', risk: '' }"
+  let result = ai.generate(prompt)
+  memory.store("scan.result", result.output)
+  return result
+}
+
+tool analyze_headers(headers) {
+  let prompt = "Analyze these HTTP security headers for vulnerabilities and missing headers:\n" + headers + "\n\nReturn JSON: { issues: [], score: 0-100, recommendations: [] }"
+  let result = ai.analyze(headers)
+  return result
+}
+
+tool check_ssl(domain) {
+  let prompt = "Analyze SSL/TLS configuration for " + domain + ". Check: cert validity, cipher suites, protocol versions, HSTS. Return JSON: { valid: bool, issues: [], grade: 'A-F' }"
+  let result = ai.generate(prompt)
+  return result
+}
+
+tool detect_waf(target) {
+  let prompt = "Detect if " + target + " uses a Web Application Firewall. Describe bypass techniques (for authorized testing only). Return JSON: { waf_detected: bool, vendor: '', bypass_hints: [] }"
+  let result = ai.generate(prompt)
+  return result
+}
+
+tool vuln_scan(target) {
+  let scan   = scan_ports(target)
+  let prompt = "Based on these open ports and services, identify potential vulnerabilities on " + target + ":\n" + scan.output + "\n\nReturn JSON: { vulns: [{ id, severity, description, cvss }], risk_level: '' }"
+  let result = ai.analyze(scan.output)
+  memory.store("vuln.result", result.output)
+  return result
+}
+
+tool generate_report(target, findings) {
+  let prompt = "Generate a professional penetration testing report for target: " + target + "\n\nFindings:\n" + findings + "\n\nInclude: Executive Summary, Technical Findings, Risk Rating, Remediation Steps."
+  let result = ai.generate(prompt)
+  return result
+}

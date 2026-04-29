@@ -1,0 +1,12 @@
+node_modules/
+src/
+playground/
+packages/
+release/
+*.log
+.env
+.env.*
+!.env.example
+tsconfig.json
+jest.config.*
+.npmrc
