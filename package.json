@@ -1,4 +1,4 @@
-{
+﻿{
   "name": "cpl-ai",
   "version": "1.0.0",
   "description": "CPL-AI: Cyber Programming Language - AI Native. AI is a first-class language feature, not a library.",
@@ -51,10 +51,11 @@
     "cpl-ai", "programming-language", "ai-native", "cyber",
     "agents", "llm", "anthropic", "ai-first", "dsl"
   ],
-  "homepage":   "https://github.com/KoppaZZZ/cpl-ai",
-  "repository": { "type": "git", "url": "https://github.com/KoppaZZZ/cpl-ai.git" },
-  "bugs":       { "url": "https://github.com/KoppaZZZ/cpl-ai/issues" },
+  "homepage":   "https://github.com/guea14012/cpl-ai",
+  "repository": { "type": "git", "url": "https://github.com/guea14012/cpl-ai.git" },
+  "bugs":       { "url": "https://github.com/guea14012/cpl-ai/issues" },
   "author":     "KoppaZZZ",
   "license":    "MIT",
   "engines":    { "node": ">=18.0.0" }
 }
+
