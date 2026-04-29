@@ -1,10 +1,10 @@
 ﻿{
   "name": "cpl-ai",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "CPL-AI: Cyber Programming Language - AI Native. AI is a first-class language feature, not a library.",
   "main": "dist/cli/index.js",
   "bin": {
-    "cpl": "./dist/cli/index.js"
+    "cpl": "./bin/cpl.js"
   },
   "scripts": {
     "build":              "tsc",
@@ -41,6 +41,7 @@
     "ts-jest":      "^29.0.0"
   },
   "files": [
+    "bin/**/*",
     "dist/**/*",
     "examples/**/*",
     "LANGUAGE_SPEC.md",
