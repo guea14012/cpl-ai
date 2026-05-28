@@ -1,4 +1,4 @@
-# ⚡ CPL-AI — Cyber Programming Language, AI Native
+#  CPL-AI — Cyber Programming Language, AI Native
 
 > A production-ready programming language where AI is a first-class citizen, not just a library.
 
