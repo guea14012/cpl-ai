@@ -6,6 +6,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import fs from 'fs';
 
 dotenv.config({ path: path.join(__dirname, '../../..', '.env') });
 
@@ -214,6 +215,29 @@ log("All memory keys: " + JSON.stringify(keys))`,
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', version: '1.0.0', provider: process.env.CPL_PROVIDER ?? 'anthropic' });
 });
+
+// ─── Static Files (Frontend) ──────────────────────────────────────────────────
+
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+const playgroundHtmlPath = path.join(__dirname, '../../..', 'playground.html');
+
+if (fs.existsSync(frontendDistPath)) {
+  console.log(`[Server] Serving frontend from ${frontendDistPath}`);
+  app.use(express.static(frontendDistPath));
+  
+  // SPA fallback: serve index.html for non-API routes
+  app.get('*', (req: Request, res: Response, next: NextFunction) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+} else if (fs.existsSync(playgroundHtmlPath)) {
+  console.log(`[Server] Frontend dist not found. Serving playground.html from root.`);
+  app.get('/', (req: Request, res: Response) => res.sendFile(playgroundHtmlPath));
+} else {
+  app.get('/', (req: Request, res: Response) => {
+    res.send('CPL-AI Backend is running. Frontend not found. Run "npm run build" in playground/frontend.');
+  });
+}
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 
