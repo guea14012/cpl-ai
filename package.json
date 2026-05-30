@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "cpl-ai",
   "version": "1.0.1",
   "description": "CPL-AI: Cyber Programming Language - AI Native. AI is a first-class language feature, not a library.",
@@ -59,4 +59,3 @@
   "license":    "MIT",
   "engines":    { "node": ">=18.0.0" }
 }
-
