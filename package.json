@@ -7,13 +7,14 @@
     "cpl": "./bin/cpl.js"
   },
   "scripts": {
-    "build":              "tsc",
+    "build":              "tsc && cd playground/backend && npm install && npm run build",
     "build:exe":          "pkg dist/cli/index.js --targets node18-win-x64,node18-linux-x64,node18-macos-x64 --output release/cpl",
     "build:all":          "npm run build && npm run build:exe",
     "dev":                "ts-node src/cli/index.ts",
     "playground:backend": "cd playground/backend && npm run dev",
     "playground:frontend": "cd playground/frontend && npm run dev",
     "test":               "jest",
+    "start":              "cd playground/backend && npm start",
     "prepublishOnly":     "npm run build"
   },
   "pkg": {
